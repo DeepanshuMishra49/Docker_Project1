@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: Test@123
+      MYSQL_DATABASE: expenses_tracker
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - expenses-webapp
+    restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pTest@123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s  
+
+  java_app:
+    image: deep270804/expensesapp:latest
+    container_name: expenses_tracker
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/expenses_tracker
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: Test@123
+    ports:
+      - "8080:8080"
+    networks:
+      - expenses-webapp
+    depends_on:
+      - mysql
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s  
+
+volumes:
+  mysql-data:
+
+networks:
+  expenses-webapp:
+
